@@ -9,14 +9,14 @@ addpath(genpath('utilities'))
 inferenceInfo = struct;
 
 % set project identifiers (only applicable if running this on savio)
-inferenceInfo.projectNameCell = {'opto_knirps_WT'};
+inferenceInfo.projectNameCell = {'hbBAC-MS2'};
 
 % set inference options
 inferenceInfo.ProteinBinFlag = 0;
 inferenceInfo.FluoBinFlag = 0;
 %inferenceInfo.timeBins = {[0 60*10],[60*10 60*40]};
-inferenceInfo.timeBins = {[60*5 60*25],[60*15 60*35]}; % should be longer than 15min
-inferenceInfo.apBins = linspace(52.5,67.5,6);
+inferenceInfo.timeBins = {[0 60*60]}; % should be longer than 15min
+inferenceInfo.apBins = linspace(20,45,6);
 
 % set core model specs
 inferenceInfo.modelSpecs.nStates = 3; % number of states in system

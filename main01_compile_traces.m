@@ -286,8 +286,10 @@ for i = 1:numExperiments
             % trace-nucleus mapping may be many-to-1
             ncIndex = find(schnitzIndex==schnitz);  
             if length(ncIndex) ~= 1
-                error(['Problem with particle-nucleus crossreference for Prefix: ' currExperiment.Prefix])          
+                continue
+                warning(['Problem with particle-nucleus crossreference for Prefix: ' currExperiment.Prefix])          
             end 
+            
 
             % Identifier variable                        
             particle = compiledParticles(j).OriginalParticle;                        
