@@ -83,7 +83,7 @@ SpotChannelIndex = 1; % this does nothing at the moment, but can serve as a star
 ncRefVec = 9:14;
 
 %% %%%%%%%%%%%%%%%%%%%%%%% Process input parameters %%%%%%%%%%%%%%%%%%%%%%%
-
+includeFlaggingInfo = false; % Added by GM 12/3/20
 for i = 1:numel(varargin)
     if ischar(varargin{i})
         if strcmpi(varargin{i}, 'firstNC')
@@ -94,6 +94,8 @@ for i = 1:numel(varargin)
             end
         elseif strcmpi(varargin{i}, 'projectName')
             error('Pipeline currently does not support alternate names for projects (otehr than what is on the data status tab)')
+        elseif strcmpi(varargin{i}, 'includeFlaggingInfo')
+            includeFlaggingInfo = true; % GM 12/3/20: Functionality for this option has yet to be implemented
         elseif i < numel(varargin)                         
             eval([varargin{i} '=varargin{i+1};']);        
         end
