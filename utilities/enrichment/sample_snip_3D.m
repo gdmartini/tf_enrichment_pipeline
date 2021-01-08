@@ -37,7 +37,8 @@ function snip2D = sample_snip_3D(x_samp,y_samp,z_samp,samplingInfo,data_stack,nu
       
     % generate weight box
     weight_box = exp(-.5*(((z_samp-z_ref_box)./samplingInfo.z_sigma).^2));
-      
+    weight_box(weight_box<exp(-1/2)) = 0;  
+    
     % take weighted average
     snip2D = nansum(protein_samp_box.*weight_box,3) ./ nansum(~isnan(protein_samp_box).*weight_box,3);
     

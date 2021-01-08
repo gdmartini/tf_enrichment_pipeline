@@ -1,4 +1,5 @@
-function nuclearSegmentation(liveProject, RefStruct, segmentIndices, nucleus_struct, NumWorkers, segmentationMethod)  
+function nuclearSegmentation(liveProject, RefStruct, segmentIndices, nucleus_struct, ...
+        NumWorkers, segmentationMethod, hasNucleusProbFiles)  
   
 
   addpath(genpath('P:/Armando/LivemRNA/mRNADynamics\src')); 
@@ -44,9 +45,9 @@ function nuclearSegmentation(liveProject, RefStruct, segmentIndices, nucleus_str
   spot_frame_cell = cell(1,length(segmentIndices));
 
   parfor w = 1:length(segmentIndices)
-      i = segmentIndices(w);
-      currentSetID = RefStruct.set_frame_array(i,1);
-      currentFrame = RefStruct.set_frame_array(i,2);  
+      subInd = segmentIndices(w);
+      currentSetID = RefStruct.set_frame_array(subInd,1);
+      currentFrame = RefStruct.set_frame_array(subInd,2);  
       
       % get nucleus
       frame_set_filter_spot = RefStruct.setID_ref==currentSetID&RefStruct.frame_ref==currentFrame;
@@ -94,13 +95,13 @@ function nuclearSegmentation(liveProject, RefStruct, segmentIndices, nucleus_str
 
       % get protein channel       
       stackPath = [currExperiment.preFolder  Prefix '_' sprintf('%03d',currentFrame) '_ch0' num2str(proteinChannel) '.tif'];
-      protein_stack = imreadStack2(stackPath, yDim, xDim, zDim+2);      
-      protein_stack = protein_stack(:,:,2:end-1);            
+      segment_stack = imreadStack2(stackPath, yDim, xDim, zDim+2);      
+      segment_stack = segment_stack(:,:,2:end-1);            
 
       
       
       if segmentationMethod == 1 % default method
-            nc_ref_frame = generateNuclearMask(protein_stack, nucleus_neighborhood_size, smoothing_kernel_size, xDim, yDim,...
+            nc_ref_frame = generateNuclearMask(segment_stack, nucleus_neighborhood_size, smoothing_kernel_size, xDim, yDim,...
                 nc_y_vec, nc_x_vec, PixelSize);
       elseif segmentationMethod == 2 % Armando's method
             his = getHisMat(currExperiment);

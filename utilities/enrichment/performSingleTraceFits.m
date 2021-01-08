@@ -1,5 +1,5 @@
 function singleTraceFits = performSingleTraceFits(compiledResults, inferenceOptions, bootstrap_flag, ...
-                              analysis_traces, trace_particle_index, nWorkersMax, resultsPath)
+                              analysis_traces, trace_particle_index, nWorkersMax, resultsPath, infName)
 
                           
     % get basic inference characteristics
@@ -100,4 +100,5 @@ function singleTraceFits = performSingleTraceFits(compiledResults, inferenceOpti
         waitbar(g/length(groupID_vec),wb);
     end
     delete(wb);
-    save([resultsPath 'singleTraceFits_' infDirList(inf).name '.mat'],'singleTraceFits')
+    
+    save([resultsPath 'singleTraceFits_' infName '.mat'],'singleTraceFits')

@@ -8,6 +8,7 @@ classdef LiveEnrichmentProject
         includedExperimentNames = [];
         includedExperiments = {};
         dataPath = '';
+        figurePath = '';
         
         unhealthyNames = [];
         
@@ -54,6 +55,7 @@ classdef LiveEnrichmentProject
             
             slashes = regexp(dropboxFolder,'/|\');
             this.dataPath = [dropboxFolder(1:slashes(end)) 'ProcessedEnrichmentData' filesep Project filesep];
+            this.figurePath = [dropboxFolder(1:slashes(end)) 'LocalEnrichmentFigures' filesep 'PipelineOutput' filesep Project filesep];
             
             for i = 1:length(this.includedExperimentNames)
                 this.includedExperiments{i} = LiveEnrichmentExperiment(this.includedExperimentNames{i});
@@ -74,6 +76,8 @@ classdef LiveEnrichmentProject
             this.hasSchnitzcells =  haveSchnitzcells(this);
             this.hasCompiledParticles = haveCompiledParticles(this);
             this.anaphaseFramesAnnotated = haveAnaphaseFrames(this);
+            
+            this.hasNucleusProbabilityMaps = haveNucleusProbabilityMaps(this);
             
             this.hasAPInfo = checkAPInfo(this);
             this.has3DSpotInfo = check3DSpotInfo(this);
@@ -136,6 +140,20 @@ classdef LiveEnrichmentProject
             end
             
         end
+        
+        function hasNucleusProbabilityMaps = haveNucleusProbabilityMaps(this)
+            
+            numValidProjects = length(this.includedExperimentNames);
+            
+            hasNucleusProbabilityMaps = zeros(1, numValidProjects);
+            
+            for k = 1:numValidProjects
+                hasNucleusProbabilityMaps(k) = ...
+                    logical(this.includedExperiments{k}.hasHisProbFiles);
+            end
+            
+        end
+        
         
         function anaphaseFramesAnnotated = haveAnaphaseFrames(this)
             

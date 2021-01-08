@@ -30,30 +30,29 @@ function spot_struct_protein = main02_sample_local_protein(projectName,varargin)
     max_nucleus_radius_um = 4;
     max_dist_nearest_neighbor_um = 2.5*max_nucleus_radius_um;
     segmentNuclei = 0;
-    use3DSpotInfo = 1;
+    use3DSpotInfo = 0;
 %     NumWorkers = 24;
     % PSF info for 3D sampling
     use_psf_fit_dims = false; % NL: currently no supported
     xy_sigma_um = 0.25;% um 
     xy_sigma_nuclear_um = 1.5;
     z_sigma_um = 0.6; % um
-    ignoreQC = false;
-    write_snip_flag = false; %NL: what does this do?
+    ignoreQC = true;    
     NumWorkers = [];
     segmentationMethod = 1;
     overwriteSegmentation = false;
 
     %% %%%%%%%%%%%%%%%%%%%%%%% Check for optional inputs %%%%%%%%%%%%%%%%%%%%%%
-    
-        %options must be specified as name, value pairs. unpredictable errors will
-        %occur, otherwise.
-        for i = 1:2:(numel(varargin)-1)
-            if i ~= numel(varargin)
-                eval([varargin{i} '=varargin{i+1};']);
-            end
+
+    %options must be specified as name, value pairs. unpredictable errors will
+    %occur, otherwise.
+    for i = 1:2:(numel(varargin)-1)
+        if i ~= numel(varargin)
+            eval([varargin{i} '=varargin{i+1};']);
         end
-        
-        parDefaultFlag = isempty(NumWorkers);
+    end
+
+    parDefaultFlag = isempty(NumWorkers);
     
     %% %%%%%%%%%%%%%%%%%%%%%%% Save key sampling parameters %%%%%%%%%%%%%%%%%%%
     proteinSamplingInfo = struct;
@@ -71,7 +70,7 @@ function spot_struct_protein = main02_sample_local_protein(projectName,varargin)
     
     %% %%%%%%%%%%%%%%%%%%%%%%% Get project info %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    [liveProject, ~, dataName, hasAPInfo, has3DSpotInfo, hasProteinInfo] = headerFunction(projectName);
+    [liveProject, ~, dataName, hasAPInfo, has3DSpotInfo, hasProteinInfo, hasNucleusProbFiles] = headerFunction(projectName);
     if ~hasProteinInfo
       warning('No input protein info associated with this project. Aborting protein sampling')
       return
@@ -129,9 +128,9 @@ function spot_struct_protein = main02_sample_local_protein(projectName,varargin)
     if segmentNuclei
 %         disp('segmenting nuclei...')   
         if ~parDefaultFlag
-          nuclearSegmentation(liveProject, RefStruct, segmentIndices, spot_struct, NumWorkers, segmentationMethod);      
+          nuclearSegmentation(liveProject, RefStruct, segmentIndices, spot_struct, NumWorkers, segmentationMethod, hasNucleusProbFiles);      
         else
-          nuclearSegmentation(liveProject, RefStruct, segmentIndices, spot_struct, [], segmentationMethod);      
+          nuclearSegmentation(liveProject, RefStruct, segmentIndices, spot_struct, [], segmentationMethod, hasNucleusProbFiles);      
         end
     end
 
@@ -192,7 +191,7 @@ function spot_struct_protein = main02_sample_local_protein(projectName,varargin)
             nucleus_mask = samplingInfo.nc_label_frame == nucleus_mask_id; 
                  
             %% %%%% Find edge control sample location %%%%%%%%%%%%%%%%%%%%%
-            [SamplingResults(i).edge_null_nc_vec(j_pass), ...
+            [SamplingResults(i).spot_edge_dist_vec(j_pass), ...
               SamplingResults(i).edge_null_x_vec(j_pass),...
               SamplingResults(i).edge_null_y_vec(j_pass), ...
               SamplingResults(i).edge_qc_flag_vec(j_pass)] = ...
@@ -242,7 +241,7 @@ function spot_struct_protein = main02_sample_local_protein(projectName,varargin)
     p = 1;
     
     tic
-    parfor i = 1:NIter%size(SetFrameArray,1)
+    for i = 1:NIter%size(SetFrameArray,1)
         % generate structure to keep track of sampling info
         samplingInfo = struct; 
         
@@ -343,7 +342,7 @@ function spot_struct_protein = main02_sample_local_protein(projectName,varargin)
               sample_protein_3D(samplingSubInfo,samplingSubInfo.protein_stack,...
               samplingSubInfo.x_spot,samplingSubInfo.y_spot,samplingSubInfo.z_spot,samplingInfo.xy_sigma,...
               samplingInfo.z_sigma,samplingSubInfo.nucleus_mask_3D);
-           
+                    
             SamplingResults(i).spot_mcp_vec(j_pass) = ...              
               sample_protein_3D(samplingSubInfo,samplingSubInfo.mcp_stack,...
               samplingSubInfo.x_spot,samplingSubInfo.y_spot,samplingSubInfo.z_spot,samplingInfo.xy_sigma,...

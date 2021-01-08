@@ -84,7 +84,7 @@ nucleus_protein_vec_dist = nucleus_protein_vec_dist(dist_vec>=DistLim);
 %% %%%%%%%%%%%%%%%%%%%%%%%%% Generate snip stacks %%%%%%%%%%%%%%%%%%%%%%%%%
 
 [spot_protein_snips, spot_mcp_snips, edge_control_protein_snips, edge_control_mcp_snips] = ...
-                                      generateProteinSnips(snip_data, ~isnan(null_protein_vec)&dist_vec>=DistLim);
+                                      generateProteinSnips(snip_data, dist_vec>=DistLim);
 
 % take average
 spot_protein_snip_mean = nanmean(spot_protein_snips,3);
@@ -92,7 +92,29 @@ edge_control_protein_snip_mean = nanmean(edge_control_protein_snips,3);
 edge_control_mcp_snip_mean = nanmean(edge_control_mcp_snips,3);
 spot_mcp_snip_mean = nanmean(spot_mcp_snips,3);
 
+%%
+close all
+set_vec = [];
+for s = 1:length(snip_data)
+  set_vec = [set_vec repelem(snip_data(s).setID,size(snip_data(s).edge_control_protein_snips,3))];
+end
+setFilter = set_vec==1;
+edge_control_protein_snips1 = cat(3,snip_data.edge_control_protein_snips);
+edge_control_protein_snip1_mean = nanmean(edge_control_protein_snips1(:,:,dist_vec>=DistLim&setFilter),3);
 
+spot_protein_snips1 = cat(3,snip_data.spot_protein_snips);
+spot_protein_snip1_mean = nanmean(spot_protein_snips1(:,:,dist_vec>=DistLim&setFilter),3);
+
+% relSnip1 = nanmean(spot_protein_snips1(:,:,dist_vec>=DistLim&setFilter)./edge_control_protein_snips1(:,:,dist_vec>=DistLim&setFilter),3);
+
+relSnip1 = spot_protein_snip1_mean./edge_control_protein_snip1_mean;
+relSnip = spot_protein_snip_mean-edge_control_protein_snip_mean;
+
+imagesc(relSnip1)
+colorbar
+
+
+%%
 % Plot heatmaps
 visibleOn = true;
 spot_protein_snip_mean_title = [inputString ' at ' 'Target Locus'];

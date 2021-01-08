@@ -1,8 +1,8 @@
 function [spot_struct_protein, new_vec_fields] = initializeProteinFields(spot_struct_protein, has3DSpotInfo)
 
-new_vec_fields = {'spot_protein_vec', ... % protein levels at locus
-                  'serial_null_protein_vec',... % protein levels at simulated spot            
-                  'edge_null_protein_vec',... % protein level at spot selected to be equidistant from nucleus edge
+new_vec_fields = {'spot_protein_vec', ... % protein levels at locus                 
+                  'serial_null_protein_vec',... % protein levels at simulated spot                              
+                  'edge_null_protein_vec',... % protein level at spot selected to be equidistant from nucleus edge                  
                   'nuclear_protein_vec',... % average inside nucleus
                   'spot_mcp_vec',... % MCP channel intensity at spot
                   'serial_null_mcp_vec',...

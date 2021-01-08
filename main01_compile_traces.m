@@ -116,7 +116,7 @@ spot_struct = [];
 h = waitbar(0,'Compiling data ...');
 for i = 1:numExperiments
     
-    waitbar(i/numExperiments,h, ['Compiling data for dataset ' num2str(i) ' of ' num2str(numExperiments)])
+    waitbar((i-1)/numExperiments,h, ['Compiling data for dataset ' num2str(i) ' of ' num2str(numExperiments)])
     
     setID = i;
     currExperiment = liveProject.includedExperiments{i};
@@ -211,7 +211,8 @@ for i = 1:numExperiments
                   compiledSchnitzCells,nucleusCounter,sum(ncFilter),has3DSpotInfo,hasAPInfo);              
                 
                 % Add QC-related flags
-                compiledSchnitzCells(nucleusCounter).qcFlag = NaN;
+                compiledSchnitzCells(nucleusCounter).TraceQCFlag = NaN;
+                compiledSchnitzCells(nucleusCounter).FrameQCFlags = NaN(1,length(ncFilter));
                 compiledSchnitzCells(nucleusCounter).N = NaN;
                 compiledSchnitzCells(nucleusCounter).sparsity = NaN;
 
@@ -223,7 +224,7 @@ for i = 1:numExperiments
 
                 % Add protein and nucleus info
                 if hasProteinInfo
-                  compiledSchnitzCells(nucleusCounter).rawNCPprotein = nanmax(schnitzcells(s).Fluo(ncFilter,:),[],2);
+                  compiledSchnitzCells(nucleusCounter).rawNCPprotein = nanmax(schnitzcells(s).Fluo(ncFilter,:),[],2)';
                 end
                 compiledSchnitzCells(nucleusCounter).frames = rawNucleusFrames';            
                 compiledSchnitzCells(nucleusCounter).nucleusID = s;     
@@ -253,7 +254,7 @@ for i = 1:numExperiments
     
         % Index vector to cross-ref w/ particles            
         schnitzIndex = [compiledSchnitzCells.nucleusID];          
-        
+            
         % Iterate through traces
         for j = 1:size(tracesNC,2)  
             % Raw fluo trace
@@ -280,7 +281,7 @@ for i = 1:numExperiments
             % Perform qc tests    
             nDP = sum(~isnan(traceFull));
             sparsity = prctile(diff(find(~isnan(traceFull))),pctSparsity);
-            qcFlag = nDP >= minDP && sparsity == 1;     
+            TraceQCFlag = nDP >= minDP && sparsity == 1;     
 
             % trace-nucleus mapping may be many-to-1
             ncIndex = find(schnitzIndex==schnitz);  
@@ -362,10 +363,16 @@ for i = 1:numExperiments
             % add qc info
             compiledSchnitzCells(ncIndex).N = nDP;
             compiledSchnitzCells(ncIndex).sparsity = sparsity;        
-            compiledSchnitzCells(ncIndex).qcFlag = qcFlag;  
+            compiledSchnitzCells(ncIndex).TraceQCFlag = TraceQCFlag; 
+            compiledSchnitzCells(ncIndex).FrameQCFlags(ncSpotFilter1) = TraceQCFlag;                             
         end      
+        if length(compiledSchnitzCells) ~= length([compiledSchnitzCells.particleID])
+          error('wtf')
+        end
         spot_struct = [spot_struct  compiledSchnitzCells];
     end
+    
+    waitbar(i/numExperiments,h, ['Compiling data for dataset ' num2str(i) ' of ' num2str(numExperiments)])
 end
 close(h)
 
@@ -400,18 +407,79 @@ interpGrid = 0:tresInterp:60*60;
 fluo_scale = prctile([spot_struct.fluo],97.5);
 big_blip_thresh = fluo_scale;
 
-for i = 1:numel(spot_struct)
+for i = 1:length(spot_struct)                     
+
+    % First identify isolated "islands" at start or end of trace. These
+    % tend to be artifactual
+    fluoVec = spot_struct(i).fluo;    
+    frameIndex = 1:length(spot_struct(i).frames);
+%         spotFrames = spot_struct(i).spotFrames;
+
+    % NL: these sizes generally work ok, but may need to change if time res
+    % is >> or  << ~20 seconds or reporates with elongation times >> or <<
+    % 2 min
+    startIndex = [];
+    stopIndex = [];
+    
+    vecNans = ~isnan(fluoVec);
+    startIndexRaw = find(vecNans,1);
+    stopIndexRaw = find(vecNans,1,'last');
+    nFramesRaw = stopIndexRaw-startIndexRaw+1;
+    
+    if length(fluoVec) > 1
+        bSize = 7;
+        kernelBig = ones(1,bSize);
+        sSize = 3;
+        kernelSmall = ones(1,sSize);       
+
+        vecConvBig = conv(kernelBig,vecNans);
+        vecConvSmall = conv(kernelSmall,vecNans);   
+
+        % generate starting flags        
+        vecConvStartBig = vecConvBig(bSize:end);
+        vecConvStartSmall = vecConvSmall(sSize:end);        
+
+        startIndex = find(vecConvStartSmall>=sSize | vecConvStartBig>=ceil(bSize/2) & vecNans,1);
+
+        % generate ending flags       
+        vecConvEndBig = vecConvBig(1:end-bSize+1);
+        vecConvEndSmall = vecConvSmall(1:end-sSize+1);
+
+        stopIndex = find(vecConvEndSmall>=sSize | vecConvEndBig>=ceil(bSize/2) & vecNans,1,'last');
+    end
+    % update QC flags
+    if ~isempty(startIndex) && ~isempty(stopIndex)
+        spot_struct(i).FrameQCFlags(frameIndex<startIndex & vecNans) = false;
+        spot_struct(i).FrameQCFlags(frameIndex>stopIndex & vecNans) = false;
+    else
+        spot_struct(i).FrameQCFlags(vecNans) = false;        
+    end
+    
+    if ~isnan(spot_struct(i).TraceQCFlag)
+        spot_struct(i).TraceQCFlag =  spot_struct(i).TraceQCFlag && nansum(spot_struct(i).FrameQCFlags)>=minDP;
+    end
+    
+    spot_struct(i).truncatedFlag = 0;
+    if ~isempty(startIndex) && ~isempty(stopIndex)
+        nFramesNew = stopIndex-startIndex+1;
+        spot_struct(i).nFramesTruncated = nFramesRaw-nFramesNew;
+        spot_struct(i).truncatedFlag = spot_struct(i).nFramesTruncated>0;
+    elseif ~isempty(startIndexRaw) && ~isempty(stopIndexRaw)
+        spot_struct(i).nFramesTruncated = nFramesRaw;
+        spot_struct(i).truncatedFlag = 1;
+    end
+    % generate time reference vefctors for interpolation
     timeVec = spot_struct(i).time;
-    fluoVec = spot_struct(i).fluo;
-    startIndex = find(~isnan(fluoVec),1);
-    stopIndex = find(~isnan(fluoVec),1,'last');    
-    timeVec = timeVec(startIndex:stopIndex);       
+    timeVec = timeVec(startIndex:stopIndex);      
+    
     if length(timeVec)>1
         timeInterp = interpGrid(interpGrid>=timeVec(1)&interpGrid<=timeVec(end));
-        for  j = 1:numel(interpFields)
+        for  j = 1:length(interpFields)
             vec = spot_struct(i).(interpFields{j})(startIndex:stopIndex);
             
+            % perform basic QC on fluorescence fields
             if contains(interpFields{j},'fluo')
+              
                 %Look for clusters of 6 or more NaNs
                 kernel = [1,1,1,1,1];
                 vecNans = isnan(vec);
@@ -430,18 +498,13 @@ for i = 1:numel(spot_struct)
                 % find and remove suspsiciously large rises
                 fluo_d = [0 diff(vec,1) 0];
                 vec(abs(fluo_d)>big_blip_thresh*0.75) = NaN;
+                
             end
             
-            % interpolate remaining NaNs    
-            queryPoints = timeVec(isnan(vec));
+            % interpolate remaining NaNs                
             referenceTime = timeVec(~isnan(vec));
             referenceVec = vec(~isnan(vec));
-%             if ~isempty(queryPoints)
-%                 newF = interp1(referenceTime,referenceVec,queryPoints);  % NL: this is a little weird but leaving for now
-%                 vec(ismember(timeVec,queryPoints)) = newF;   
-%             else
-%                 vec = referenceVec;
-%             end                 
+              
             if length(referenceTime)>1
                 % Interpolate to standardize spacing        
                 spot_struct(i).([interpFields{j} 'Interp']) = interp1(referenceTime,referenceVec,timeInterp);
@@ -459,6 +522,7 @@ for i = 1:numel(spot_struct)
     end
     spot_struct(i).timeInterp = timeInterp;
     spot_struct(i).tresInterp = tresInterp;
+        
 end
 
 % save

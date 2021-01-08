@@ -1,35 +1,38 @@
-function nucleus_struct = truncateParticleFields(nucleus_struct,has3DSpotInfo,hasAPInfo)
+function spot_struct = truncateParticleFields(spot_struct,has3DSpotInfo,hasAPInfo)
 
-    nucleus_struct = nucleus_struct(~isnan([nucleus_struct.particleID]));
-    nucleus_struct = rmfield(nucleus_struct,'spotFrames');
+    spot_struct = spot_struct(~isnan([spot_struct.particleID]));
+    spot_struct = rmfield(spot_struct,'spotFrames');
     
-    for i = 1:length(nucleus_struct)
-      fluo = nucleus_struct(i).fluo;
+    for i = 1:length(spot_struct)
+      fluo = spot_struct(i).fluo;
       nanFilter = ~isnan(fluo);
       
-      nucleus_struct(i).fluo = fluo(nanFilter);
-      nucleus_struct(i).time = nucleus_struct(i).time(nanFilter);
-      nucleus_struct(i).frames = nucleus_struct(i).frames(nanFilter);
+      spot_struct(i).fluo = fluo(nanFilter);
+      spot_struct(i).time = spot_struct(i).time(nanFilter);
+      spot_struct(i).frames = spot_struct(i).frames(nanFilter);
       
-      nucleus_struct(i).xPosParticle = nucleus_struct(i).xPosParticle(nanFilter);
-      nucleus_struct(i).yPosParticle = nucleus_struct(i).yPosParticle(nanFilter);
-      nucleus_struct(i).zPosParticle = nucleus_struct(i).zPosParticle(nanFilter);      
+      spot_struct(i).xPosParticle = spot_struct(i).xPosParticle(nanFilter);
+      spot_struct(i).yPosParticle = spot_struct(i).yPosParticle(nanFilter);
+      spot_struct(i).zPosParticle = spot_struct(i).zPosParticle(nanFilter);      
       
-      nucleus_struct(i).xPosNucleus = nucleus_struct(i).xPosNucleus(nanFilter);
-      nucleus_struct(i).yPosNucleus = nucleus_struct(i).yPosNucleus(nanFilter);
-      nucleus_struct(i).rawNCPprotein = nucleus_struct(i).rawNCPprotein(nanFilter);
+      spot_struct(i).xPosNucleus = spot_struct(i).xPosNucleus(nanFilter);
+      spot_struct(i).yPosNucleus = spot_struct(i).yPosNucleus(nanFilter);
+      spot_struct(i).rawNCPprotein = spot_struct(i).rawNCPprotein(nanFilter);
+      
+      spot_struct(i).FrameQCFlags = spot_struct(i).FrameQCFlags(nanFilter);
       
       if has3DSpotInfo
-        nucleus_struct(i).xPosParticle3D = nucleus_struct(i).xPosParticle3D(nanFilter);
-        nucleus_struct(i).yPosParticle3D = nucleus_struct(i).yPosParticle3D(nanFilter);
-        nucleus_struct(i).yPosParticle3D = nucleus_struct(i).zPosParticle3D(nanFilter); 
-        nucleus_struct(i).fluo3D = nucleus_struct(i).fluo3D(nanFilter);
+        spot_struct(i).xPosParticle3D = spot_struct(i).xPosParticle3D(nanFilter);
+        spot_struct(i).yPosParticle3D = spot_struct(i).yPosParticle3D(nanFilter);
+        spot_struct(i).zPosParticle3D = spot_struct(i).zPosParticle3D(nanFilter); 
+%         spot_struct(i).zPosParticleDetrended3D = spot_struct(i).zPosParticleDetrended3D(nanFilter);
+        spot_struct(i).fluo3D = spot_struct(i).fluo3D(nanFilter);
       end
       if hasAPInfo 
-        nucleus_struct(i).APPosParticle = nucleus_struct(i).APPosParticle(nanFilter);
+        spot_struct(i).APPosParticle = spot_struct(i).APPosParticle(nanFilter);
       end
 
-      nucleus_struct(i).zPosParticleDetrended = nucleus_struct(i).zPosParticleDetrended(nanFilter);
+      spot_struct(i).zPosParticleDetrended = spot_struct(i).zPosParticleDetrended(nanFilter);
       
-      nucleus_struct(i).fluoOffset = nucleus_struct(i).fluoOffset(nanFilter);       
+      spot_struct(i).fluoOffset = spot_struct(i).fluoOffset(nanFilter);       
     end

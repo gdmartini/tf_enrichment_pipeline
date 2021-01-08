@@ -30,7 +30,7 @@ RefStruct.particle_qcFlag_ref = [];
 for i = 1:numel(spot_struct_protein)
     ParticleID = spot_struct_protein(i).particleID;    
     RefStruct.particleID_ref = [RefStruct.particleID_ref repelem(ParticleID, numel(spot_struct_protein(i).frames))];
-    RefStruct.particle_qcFlag_ref = [RefStruct.particle_qcFlag_ref repelem(spot_struct_protein(i).qcFlag, numel(spot_struct_protein(i).frames))];
+    RefStruct.particle_qcFlag_ref = [RefStruct.particle_qcFlag_ref spot_struct_protein(i).FrameQCFlags];
     RefStruct.setID_ref = [RefStruct.setID_ref repelem(spot_struct_protein(i).setID,numel(spot_struct_protein(i).frames))];
     RefStruct.master_nucleusID_ref = [RefStruct.master_nucleusID_ref repelem(round(spot_struct_protein(i).ncID*1e5),numel(spot_struct_protein(i).frames))];
     RefStruct.particle_index_ref = [RefStruct.particle_index_ref repelem(i,numel(spot_struct_protein(i).frames))]; 
@@ -39,7 +39,7 @@ end
 
 % option to override qc 
 if ignoreQC 
-    RefStruct.particle_qcFlag_ref = true(size(RefStruct.particle_qcFlag_ref));
+    RefStruct.particle_qcFlag_ref = true(size(RefStruct.particleID_ref));
 end
 
 %%% Generate reference array for set-frame combos

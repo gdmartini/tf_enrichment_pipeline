@@ -1,5 +1,12 @@
 %%%%%%% Nested function to make basic and PBoC-style heatmap plots %%%%%%%
-function heatmap_fig = makeHeatmapPlots(Image, VisibleOn, Title, CLabel,Colormap_heat,PixelSize,lb,ub)
+function [heatmap_fig, ub, lb] = makeHeatmapPlots(Image, VisibleOn, Title, CLabel,Colormap_heat,PixelSize,lb,ub)
+    % infer boundaries if they are not specified
+    if isempty(lb)
+        lb = round(prctile(Image(:),2),1);
+    end
+    if isempty(ub)
+        ub = round(prctile(Image(:),98),1);
+    end
     if VisibleOn
         heatmap_fig = figure;
     else

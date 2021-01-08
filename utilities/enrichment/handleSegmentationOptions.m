@@ -15,12 +15,14 @@ for i = 1:size(set_frame_array,1)
     spot_ref_name = [refPath 'spot_roi_frame_set' sprintf('%02d',setID_temp) '_frame' sprintf('%03d',frame_temp) '.mat'];    
     spot_frame_vec(i) = isfile(spot_ref_name);    
 end    
+
 if all(spot_frame_vec) && segmentNuclei   
     warning('previous segmentation results found')
     y = 1;
     n = 0;
     overwrite = input('overwrite segmentation results? (y/n)');
     segmentNuclei = overwrite;
+    
 elseif ~all(nc_frame_vec) && ~segmentNuclei   
     warning('some or all frames missing nucleus segmentation data. Segmenting missing frames only')
     segmentNuclei = 1;   
